@@ -15,6 +15,12 @@ HOSTNAME=$(hostname)
 setup_common() {
   echo "Running common setup..."
 
+  # Clean up any old repository files to ensure idempotency before running apt-get update
+  if [ -f /etc/apt/sources.list.d/kubernetes.list ]; then
+    echo "Removing old Kubernetes repository file..."
+    sudo rm /etc/apt/sources.list.d/kubernetes.list
+  fi
+
   # 1. Install required packages
   sudo apt-get update
   sudo apt-get install -y apt-transport-https ca-certificates curl
@@ -40,12 +46,6 @@ setup_common() {
 
   # Extract Kubernetes minor version (e.g., v1.30) from KUBERNETES_VERSION (e.g., 1.30.1)
   K8S_MINOR_VERSION=$(echo "$KUBERNETES_VERSION" | grep -oE '^[0-9]+\.[0-9]+')
-
-  # Clean up any old repository files to ensure idempotency
-  if [ -f /etc/apt/sources.list.d/kubernetes.list ]; then
-    echo "Removing old Kubernetes repository file..."
-    sudo rm /etc/apt/sources.list.d/kubernetes.list
-  fi
 
   # Add Kubernetes APT repository
   curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_MINOR_VERSION}/deb/Release.key" | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
