@@ -23,7 +23,8 @@ setup_common() {
 
   # 1. Install required packages
   sudo apt-get update
-  sudo apt-get install -y apt-transport-https ca-certificates curl
+  # Install sshpass for password-based scp automation
+  sudo apt-get install -y apt-transport-https ca-certificates curl sshpass
 
   # 2. Install containerd
   sudo mkdir -p /etc/apt/keyrings
@@ -46,15 +47,13 @@ setup_common() {
   echo "Installing Kubernetes components..."
   sudo apt-get install -y apt-transport-https ca-certificates curl gpg
 
-  # Extract Kubernetes minor version (e.g., v1.30) from KUBERNETES_VERSION (e.g., 1.30.1)
-  K8S_MINOR_VERSION=$(echo "$KUBERNETES_VERSION" | grep -oE '^[0-9]+\.[0-9]+')
-
   # Add Kubernetes APT repository
-  curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_MINOR_VERSION}/deb/Release.key" | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-  echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${K8S_MINOR_VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_MINOR_VERSION}/deb/Release.key" | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_MINOR_VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
   sudo apt-get update
-  sudo apt-get install -y kubelet=$KUBERNETES_VERSION kubeadm=$KUBERNETES_VERSION kubectl=$KUBERNETES_VERSION
+  # Install the latest available versions for the specified minor version
+  sudo apt-get install -y kubelet kubeadm kubectl
   sudo apt-mark hold kubelet kubeadm kubectl
 
   # 5. Enable kernel modules and sysctl
@@ -91,10 +90,9 @@ setup_control_plane() {
 setup_worker_node() {
   echo "Setting up Worker Node..."
 
-  # 1. Copy join command from control plane
+  # 1. Copy join command from control plane using password authentication
   echo "Attempting to copy join command from control plane node..."
-  echo "NOTE: This requires passwordless SSH (public key authentication) to be configured from this node to the control plane node."
-  scp ${USER}@${NODE00_IP}:/tmp/kubeadm_join_command.sh /tmp/kubeadm_join_command.sh
+  sshpass -p "$NODE00_PASSWORD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${USER}@${NODE00_IP}:/tmp/kubeadm_join_command.sh /tmp/kubeadm_join_command.sh
 
   # 2. Join the cluster
   sudo bash /tmp/kubeadm_join_command.sh
