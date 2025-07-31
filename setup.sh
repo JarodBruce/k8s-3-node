@@ -35,8 +35,16 @@ setup_common() {
   sudo systemctl restart containerd
 
   # 4. Install Kubernetes components
-  curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-  echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  echo "Installing Kubernetes components..."
+  sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+
+  # Extract Kubernetes minor version (e.g., v1.30) from KUBERNETES_VERSION (e.g., 1.30.1)
+  K8S_MINOR_VERSION=$(echo "$KUBERNETES_VERSION" | grep -oE '^[0-9]+\.[0-9]+')
+
+  # Add Kubernetes APT repository
+  curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_MINOR_VERSION}/deb/Release.key" | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${K8S_MINOR_VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
   sudo apt-get update
   sudo apt-get install -y kubelet=$KUBERNETES_VERSION kubeadm=$KUBERNETES_VERSION kubectl=$KUBERNETES_VERSION
   sudo apt-mark hold kubelet kubeadm kubectl
