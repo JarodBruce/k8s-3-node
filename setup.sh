@@ -15,6 +15,10 @@ HOSTNAME=$(hostname)
 setup_common() {
   echo "Running common setup..."
 
+  # Reset any previous kubeadm installation attempts
+  echo "Resetting previous kubeadm installation attempts..."
+  sudo kubeadm reset -f
+
   # Clean up any old repository files to ensure idempotency before running apt-get update
   if [ -f /etc/apt/sources.list.d/kubernetes.list ]; then
     echo "Removing old Kubernetes repository file..."
