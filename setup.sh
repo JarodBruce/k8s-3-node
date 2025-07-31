@@ -72,7 +72,7 @@ setup_control_plane() {
   echo "Setting up Control Plane..."
 
   # 1. Initialize Kubernetes cluster
-  sudo kubeadm init --pod-network-cidr=$POD_CIDR --apiserver-advertise-address=$NODE00_IP
+  sudo kubeadm init --pod-network-cidr=$POD_CIDR --apiserver-advertise-address=$NODE00_IP --cri-socket=unix:///var/run/containerd/containerd.sock
 
   # 2. Configure kubectl for the user
   mkdir -p $HOME/.kube
@@ -90,9 +90,25 @@ setup_control_plane() {
 setup_worker_node() {
   echo "Setting up Worker Node..."
 
-  # 1. Copy join command from control plane using password authentication
-  echo "Attempting to copy join command from control plane node..."
-  sshpass -p "$NODE00_PASSWORD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${USER}@${NODE00_IP}:/tmp/kubeadm_join_command.sh /tmp/kubeadm_join_command.sh
+  # 1. Copy join command from control plane with retry logic
+  echo "Attempting to copy join command from control plane node (will retry for up to 5 minutes)..."
+
+  JOIN_COMMAND_COPIED=false
+  for i in {1..30}; do # Retry 30 times (30 * 10s = 300s = 5 minutes)
+    # Try to copy the file, redirecting output to null to avoid clutter
+    if sshpass -p "$NODE00_PASSWORD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${USER}@${NODE00_IP}:/tmp/kubeadm_join_command.sh /tmp/kubeadm_join_command.sh &> /dev/null; then
+      echo "Join command copied successfully."
+      JOIN_COMMAND_COPIED=true
+      break
+    fi
+    echo "Failed to copy join command. Retrying in 10 seconds... (Attempt $i/30)"
+    sleep 10
+  done
+
+  if [ "$JOIN_COMMAND_COPIED" = false ]; then
+    echo "Error: Could not copy join command from control plane after 5 minutes. Exiting."
+    exit 1
+  fi
 
   # 2. Join the cluster
   sudo bash /tmp/kubeadm_join_command.sh
