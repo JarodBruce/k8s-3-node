@@ -19,6 +19,11 @@ setup_common() {
   echo "Resetting previous kubeadm installation attempts..."
   sudo kubeadm reset -f
 
+  # Disable swap
+  echo "Disabling swap..."
+  sudo swapoff -a
+  sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
   # Clean up any old repository files to ensure idempotency before running apt-get update
   if [ -f /etc/apt/sources.list.d/kubernetes.list ]; then
     echo "Removing old Kubernetes repository file..."
