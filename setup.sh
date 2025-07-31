@@ -27,6 +27,8 @@ setup_common() {
 
   # 2. Install containerd
   sudo mkdir -p /etc/apt/keyrings
+  # Clean up old docker gpg key to ensure idempotency
+  sudo rm -f /etc/apt/keyrings/docker.gpg
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
   echo \
     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
@@ -90,7 +92,8 @@ setup_worker_node() {
   echo "Setting up Worker Node..."
 
   # 1. Copy join command from control plane
-  echo "Please enter the password for the user on the control plane node ($NODE00_IP):"
+  echo "Attempting to copy join command from control plane node..."
+  echo "NOTE: This requires passwordless SSH (public key authentication) to be configured from this node to the control plane node."
   scp ${USER}@${NODE00_IP}:/tmp/kubeadm_join_command.sh /tmp/kubeadm_join_command.sh
 
   # 2. Join the cluster
