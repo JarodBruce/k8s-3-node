@@ -120,7 +120,7 @@ setup_worker_node() {
   fi
 
   # 2. Join the cluster
-  sudo bash /tmp/kubeadm_join_command.sh
+  sudo $(cat /tmp/kubeadm_join_command.sh)
 }
 
 # Main logic
