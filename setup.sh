@@ -15,10 +15,6 @@ HOSTNAME=$(hostname)
 setup_common() {
   echo "Running common setup..."
 
-  # Reset any previous kubeadm installation attempts
-  echo "Resetting previous kubeadm installation attempts..."
-  sudo kubeadm reset -f
-
   # Disable swap
   echo "Disabling swap..."
   sudo swapoff -a
@@ -120,7 +116,9 @@ setup_worker_node() {
   fi
 
   # 2. Join the cluster
-  sudo $(cat /tmp/kubeadm_join_command.sh)
+  echo "Executing the following join command:"
+  cat /tmp/kubeadm_join_command.sh
+  sudo bash -c "$(cat /tmp/kubeadm_join_command.sh) --v=5"
 }
 
 # Main logic
