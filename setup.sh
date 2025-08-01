@@ -31,6 +31,21 @@ setup_common() {
   # Install sshpass for password-based scp automation
   sudo apt-get install -y apt-transport-https ca-certificates curl sshpass ntp
 
+  echo "Waiting for NTP to synchronize..."
+  for i in {1..24}; do # Retry for up to 2 minutes (24 * 5s)
+    if timedatectl status | grep -q 'NTP synchronized: yes'; then
+      echo "NTP synchronized successfully."
+      break
+    fi
+    echo "Waiting for NTP sync... (Attempt $i/24)"
+    sleep 5
+  done
+  # タイムアウトした場合でも、現在のステータスを表示して続行する
+  if ! timedatectl status | grep -q 'NTP synchronized: yes'; then
+    echo "Warning: NTP sync may not have completed within 2 minutes. Showing status and continuing..."
+    timedatectl status
+  fi
+
   # 2. Install containerd
   sudo mkdir -p /etc/apt/keyrings
   # Clean up old docker gpg key to ensure idempotency
@@ -116,7 +131,7 @@ setup_worker_node() {
   fi
 
   # 2. Join the cluster
-  sudo $(cat /tmp/kubeadm_join_command.sh)
+  sudo bash -c "$(cat /tmp/kubeadm_join_command.sh) --v=5"
 }
 
 # Main logic
