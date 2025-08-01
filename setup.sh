@@ -29,7 +29,7 @@ setup_common() {
   # 1. Install required packages
   sudo apt-get update
   # Install sshpass for password-based scp automation
-  sudo apt-get install -y apt-transport-https ca-certificates curl sshpass
+  sudo apt-get install -y apt-transport-https ca-certificates curl sshpass ntp
 
   # 2. Install containerd
   sudo mkdir -p /etc/apt/keyrings
@@ -116,9 +116,7 @@ setup_worker_node() {
   fi
 
   # 2. Join the cluster
-  echo "Executing the following join command:"
-  cat /tmp/kubeadm_join_command.sh
-  sudo bash -c "$(cat /tmp/kubeadm_join_command.sh) --v=5"
+  sudo $(cat /tmp/kubeadm_join_command.sh)
 }
 
 # Main logic
