@@ -28,22 +28,33 @@ setup_common() {
 
   # 1. Install required packages
   sudo apt-get update
-  # Install sshpass for password-based scp automation
-  sudo apt-get install -y apt-transport-https ca-certificates curl sshpass ntp
+  # Install sshpass for password-based scp automation and chrony for time sync
+  sudo apt-get install -y apt-transport-https ca-certificates curl sshpass chrony
 
+  # Force immediate time synchronization
+  echo "Forcing immediate time synchronization with chrony..."
+  # The `makestep` command is used to step the system clock immediately,
+  # which is useful for correcting large time differences at startup.
+  sudo chronyc -a makestep
+
+  # Wait for synchronization to be confirmed
   echo "Waiting for NTP to synchronize..."
   for i in {1..24}; do # Retry for up to 2 minutes (24 * 5s)
-    if timedatectl status | grep -q 'NTP synchronized: yes'; then
+    # "chronyc tracking" shows sync status. We wait until the "Leap status" is "Normal".
+    if chronyc tracking | grep -q "Leap status     : Normal"; then
       echo "NTP synchronized successfully."
+      chronyc tracking
       break
     fi
     echo "Waiting for NTP sync... (Attempt $i/24)"
     sleep 5
   done
-  # タイムアウトした場合でも、現在のステータスを表示して続行する
-  if ! timedatectl status | grep -q 'NTP synchronized: yes'; then
-    echo "Warning: NTP sync may not have completed within 2 minutes. Showing status and continuing..."
-    timedatectl status
+
+  # If sync failed after retries, exit with an error.
+  if ! chronyc tracking | grep -q "Leap status     : Normal"; then
+    echo "Error: NTP sync failed after 2 minutes. Exiting."
+    chronyc tracking
+    exit 1
   fi
 
   # 2. Install containerd
