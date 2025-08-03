@@ -86,7 +86,7 @@ EOT
 
     echo "📦 Installing Kubernetes components (kubeadm, kubelet, kubectl)..."
     sudo apt-get install -y -qq apt-transport-https ca-certificates curl >/dev/null
-    curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_MINOR_VERSION}/deb/Release.key" | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_MINOR_VERSION}/deb/Release.key" | sudo gpg --batch --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_MINOR_VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
     sudo apt-get update -qq >/dev/null
     sudo apt-get install -y -qq kubelet kubeadm kubectl >/dev/null
