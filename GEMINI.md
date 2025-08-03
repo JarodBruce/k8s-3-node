@@ -95,8 +95,8 @@
 3つのubuntu-serverを使いk8sのクラスタを組んでもらいます。
 原則としてHostname node01,node02がWorker Nodeでnode00がControl Plane Nodeです。
 ですが、IPアドレスなどを直接指定した方がmDNSを利用するより賢明だと考えられるので
-`.env`ファイルにHostname,IPアドレスなどを記述するのでそのテンプレートを作ってください。
-そしてここからが重要ですが。
-1つのbashファイルを使い3つのノードの設定を行います。
-正確には1つのbashファイルと.envファイルを使います。
-そして自分のHostNameがnode00,01,02のどれかによって分岐して自動でセットアップを完了するようにしてください。
+`.env`ファイルにHostname,IPアドレスと各nodeのusernameとpasswordを記述するのでそのテンプレートを作ってください。
+node00のControlPlaneNodeがkubeadmの設定が完了した時にtoken情報を込みの
+```sudo kubeadm join 192.168.1.210:6443 --token 1vluz5.ka8k2v1o16x37qib --discovery-token-ca-cert-hash sha256:b918088ac1250f668a41f5a01caf8ddffa0ba1306a2dd9bdf8285a1d70f5af6f```
+みたいな情報をnode00が設定完了しだいnode01,node02 txtに格納してscpで送ってください。
+それを検知してnode01,node02の設定をjoinさせてください
