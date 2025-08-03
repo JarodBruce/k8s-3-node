@@ -117,14 +117,17 @@ sshpass -p "$NODE00_PASSWORD" ssh $SSH_OPTS ${NODE00_USER}@${NODE00_IP} << EOF
 
   echo "🏠 Configuring kubectl for user ${NODE00_USER}..."
   mkdir -p \$HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf \$HOME/.kube/config
-  sudo chown \$(id -u):\$(id -g) \$HOME/.kube/config
+  sudo cp /etc/kubernetes/admin.conf \$HOME/.kube/config
+  sudo chown uc:g uc:g \$HOME/.kube/config
+
+  echo "--- Waiting 15 seconds for control plane to stabilize... ---"
+  sleep 15
 
   echo "🌐 Applying Calico network add-on..."
-  kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+  sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
 
   echo "🔑 Generating join command..."
-  sudo kubeadm token create --print-join-command > /tmp/join-command.txt
+  sudo kubeadm --kubeconfig=/etc/kubernetes/admin.conf token create --print-join-command > /tmp/join-command.txt
   echo "✅ Control-Plane setup complete."
 EOF
 
@@ -132,8 +135,7 @@ EOF
 echo -e "\n==== [4/6] Deploying join-listener scripts to worker nodes ===="
 
 # This is the script that will wait for the join command and execute it
-WAIT_AND_JOIN_SCRIPT='
-#!/bin/bash
+WAIT_AND_JOIN_SCRIPT='#!/bin/bash
 set -e
 echo "[$(date)] Waiting for /tmp/join-command.txt..."
 while [ ! -f /tmp/join-command.txt ]; do
