@@ -116,9 +116,9 @@ sshpass -p "$NODE00_PASSWORD" ssh $SSH_OPTS ${NODE00_USER}@${NODE00_IP} << EOF
   sudo kubeadm init --pod-network-cidr=${POD_CIDR} --apiserver-advertise-address=${NODE00_IP}
 
   echo "🏠 Configuring kubectl for user ${NODE00_USER}..."
-  mkdir -p \$HOME/.kube
-  sudo cp /etc/kubernetes/admin.conf \$HOME/.kube/config
-  sudo chown uc:g uc:g \$HOME/.kube/config
+  mkdir -p $HOME/.kube
+  sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown ${NODE00_USER}:${NODE00_USER} $HOME/.kube/config
 
   echo "--- Waiting 15 seconds for control plane to stabilize... ---"
   sleep 15
@@ -135,7 +135,8 @@ EOF
 echo -e "\n==== [4/6] Deploying join-listener scripts to worker nodes ===="
 
 # This is the script that will wait for the join command and execute it
-WAIT_AND_JOIN_SCRIPT='#!/bin/bash
+WAIT_AND_JOIN_SCRIPT='
+#!/bin/bash
 set -e
 echo "[$(date)] Waiting for /tmp/join-command.txt..."
 while [ ! -f /tmp/join-command.txt ]; do
