@@ -49,7 +49,8 @@ for i in ${!ALL_NODES_IP[@]}; do
 
   sshpass -p "$PASS" ssh $SSH_OPTS ${USER}@${IP} << EOF
     set -e # Exit on error within the SSH session
-    
+    set -o pipefail # Exit on pipe failures
+
     echo "🔑 Configuring passwordless sudo for user ${USER}..."
     echo "${PASS}" | sudo -S sh -c "echo '${USER} ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/010_${USER}-nopasswd && chmod 440 /etc/sudoers.d/010_${USER}-nopasswd"
 
@@ -86,7 +87,11 @@ EOT
 
     echo "📦 Installing Kubernetes components (kubeadm, kubelet, kubectl)..."
     sudo apt-get install -y -qq apt-transport-https ca-certificates curl >/dev/null
+    
+    # Clean up old key and add new one
+    sudo rm -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_MINOR_VERSION}/deb/Release.key" | sudo gpg --batch --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_MINOR_VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
     sudo apt-get update -qq >/dev/null
     sudo apt-get install -y -qq kubelet kubeadm kubectl >/dev/null
