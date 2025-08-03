@@ -109,6 +109,9 @@ done
 echo -e "\n==== [3/6] Setting up Control-Plane node (${NODE00_HOSTNAME}) ===="
 sshpass -p "$NODE00_PASSWORD" ssh $SSH_OPTS ${NODE00_USER}@${NODE00_IP} << EOF
   set -e
+  echo "🧹 Resetting any previous kubeadm installation..."
+  sudo kubeadm reset -f
+
   echo "🚀 Initializing Kubernetes cluster with kubeadm..."
   sudo kubeadm init --pod-network-cidr=${POD_CIDR} --apiserver-advertise-address=${NODE00_IP}
 
