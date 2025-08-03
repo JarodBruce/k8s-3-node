@@ -50,6 +50,9 @@ for i in ${!ALL_NODES_IP[@]}; do
   sshpass -p "$PASS" ssh $SSH_OPTS ${USER}@${IP} << EOF
     set -e # Exit on error within the SSH session
     
+    echo "🔑 Configuring passwordless sudo for user ${USER}..."
+    echo "${PASS}" | sudo -S sh -c "echo '${USER} ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/010_${USER}-nopasswd && chmod 440 /etc/sudoers.d/010_${USER}-nopasswd"
+
     echo "🔑 Setting hostname..."
     sudo hostnamectl set-hostname ${HOSTNAME}
 
