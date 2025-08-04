@@ -92,11 +92,48 @@
 # パート1: プロジェクト概要
 
 ## プロジェクトの目的
-3つのubuntu-serverを使いk8sのクラスタを組んでもらいます。
-原則としてHostname node01,node02がWorker Nodeでnode00がControl Plane Nodeです。
-ですが、IPアドレスなどを直接指定した方がmDNSを利用するより賢明だと考えられるので
-`.env`ファイルにHostname,IPアドレスと各nodeのusernameとpasswordを記述するのでそのテンプレートを作ってください。
-node00のControlPlaneNodeがkubeadmの設定が完了した時にtoken情報を込みの
-```sudo kubeadm join 192.168.1.210:6443 --token 1vluz5.ka8k2v1o16x37qib --discovery-token-ca-cert-hash sha256:b918088ac1250f668a41f5a01caf8ddffa0ba1306a2dd9bdf8285a1d70f5af6f```
-みたいな情報をnode00が設定完了しだいnode01,node02 txtに格納してscpで送ってください。
-それを検知してnode01,node02の設定をjoinさせてください
+3のubuntu-serverを使ったk8s-clusterを組んでもらいます。
+そしてその際に`.env`ファイルを基準してもらいます。
+```.env
+# Kubernetes version
+KUBERNETES_MINOR_VERSION="1.33"
+
+ # Pod network CIDR for Calico
+POD_CIDR="172.16.0.0/16"
+
+# Hostnames
+NODE00_HOSTNAME="node00"
+NODE01_HOSTNAME="node01"
+NODE02_HOSTNAME="node02"
+
+# IP address
+NODE00_IP="192.168.1.210"
+NODE01_IP="192.168.1.211"
+NODE02_IP="192.168.1.212"
+
+# User and Password
+NODE00_USER="user"
+NODE00_PASSWORD="user"
+
+NODE01_USER="user"
+NODE01_PASSWORD="user"
+
+NODE02_USER="user"
+NODE02_PASSWORD="user"
+```
+
+この通り書くnodeのusernameとpasswordが書いてあるので
+まずこれを基準に相手にSSHできるかを確かめて
+できなかった場合はそこで終了
+できれば、次のステップに進んでください
+次のステップではhostname別にk8sの役割分担を進めていきます。
+具体的には
+node00:Control Plane Node
+node01:Worker Node
+node02:Worker Node
+です。
+
+そしてk8s v1.33を使ってください。
+
+ここまできたらあとは組むだけで
+各NodeにSSHして適切なコマンドを実行してください。
